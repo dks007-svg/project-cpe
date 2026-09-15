@@ -76,19 +76,19 @@ jobs:
           cache-targets: true
           cache-all-crates: true
 
-      - name: Build backend (aarch64-unknown-linux-musl)
+      - name: Build backend (aarch64-unknown-linux-gnu)
         working-directory: backend
         run: |
-          echo "🦀 构建后端 (aarch64-unknown-linux-musl)..."
+          echo "🦀 构建后端 (aarch64-unknown-linux-gnu)..."
 
-          export CC_AARCH64_UNKNOWN_LINUX_MUSL=musl-gcc
-          export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc
+          export CC_AARCH64_UNKNOWN_LINUX_GNU=aarch64-linux-gnu-gcc
+          export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc
           export SQLITE3_STATIC=1
-          export LIBSQLITE3_SYS_USE_PKG_CONFIG=0
+          export LIBSQLITE3_SYS_USE_PKG_CONFIG=1
 
-          cargo build --locked --release --target aarch64-unknown-linux-musl
+          cargo build --locked --release --target aarch64-unknown-linux-gnu
 
-          BINARY_PATH="target/aarch64-unknown-linux-musl/release/udx710"
+          BINARY_PATH="target/aarch64-unknown-linux-gnu/release/udx710"
 
           echo "后端构建完成:"
           ls -lh "$BINARY_PATH"
@@ -97,7 +97,7 @@ jobs:
       - name: Compress binary with UPX
         if: inputs.use_upx == true
         run: |
-          BINARY_PATH="backend/target/aarch64-unknown-linux-musl/release/udx710"
+          BINARY_PATH="backend/target/aarch64-unknown-linux-gnu/release/udx710"
 
           echo "使用 UPX 压缩..."
           BEFORE_SIZE=$(stat -c%s "$BINARY_PATH")
@@ -105,7 +105,7 @@ jobs:
           upx --best --lzma "$BINARY_PATH"
 
           AFTER_SIZE=$(stat -c%s "$BINARY_PATH")
-          RATIO=$(echo "scale=1; 100 - ($AFTER_SIZE * 100 / $BEFORE_SIZE)" | bc)
+          RATIO=$(echo "scale=2; 100 - ($AFTER_SIZE * 100 / $BEFORE_SIZE)" | bc)
 
           echo "压缩完成，节省 ${RATIO}%"
           ls -lh "$BINARY_PATH"
@@ -143,9 +143,9 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           COMMIT=$(git rev-parse --short HEAD)
           BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          ARCH="aarch64-unknown-linux-musl"
+          ARCH="aarch64-unknown-linux-gnu"
 
-          BINARY_PATH="backend/target/aarch64-unknown-linux-musl/release/udx710"
+          BINARY_PATH="backend/target/aarch64-unknown-linux-gnu/release/udx710"
           FRONTEND_DIR="frontend/dist"
 
           if [ ! -f "$BINARY_PATH" ]; then
@@ -267,7 +267,7 @@ jobs:
             echo "|------|-----|"
             echo "| 版本 | ${{ steps.version.outputs.version }} |"
             echo "| Commit | ${{ github.sha }} |"
-            echo "| 架构 | aarch64-unknown-linux-musl |"
+            echo "| 架构 | aarch64-unknown-linux-gnu |"
             echo "| UPX 压缩 | ${{ inputs.use_upx }} |"
             echo ""
             echo "### 产物"
